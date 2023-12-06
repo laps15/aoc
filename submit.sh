@@ -5,7 +5,8 @@ DAY=$2
 LEVEL=$3
 ANS=$4
 
-SESSION=$(cat ../.session)
+FROM_CWD=$(dirname $0)
+SESSION=$(cat ${FROM_CWD}/.session)
 
 curl "https://adventofcode.com/${YEAR}/day/${DAY}/answer" \
   -H 'authority: adventofcode.com' \
