@@ -6,9 +6,9 @@ import sys
 INPUT_FILE="in/" + sys.argv[0].split('/')[1] + ".in"
 
 with open(INPUT_FILE) as f:
-    data = f.readlines()
+    raw_data = f.readlines()
 
-print(data)
+print(raw_data)
 
 def solve1():
     solution = -1
