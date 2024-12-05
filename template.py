@@ -1,22 +1,25 @@
 #!/usr/bin/python3
 
 import math
+import re
 import sys
 
-INPUT_FILE="in/" + sys.argv[0].split('/')[1] + ".in"
+INPUT_FILE="in/" + sys.argv[0].split('/')[1].split('.')[0] + ".in"
 
 with open(INPUT_FILE) as f:
-    raw_data = f.readlines()
+    data = f.readlines()
 
-print(raw_data)
+print(data)
 
 def solve1():
-    solution = -1
-    print("First answer:", solution)
+    acc = "NaN Yet!"
+
+    print(f"First result: {acc}")
 
 def solve2():
-    solution = -1
-    print("Second answer:", solution)
+    acc = "NaN Yet!"
+
+    print(f"Second result: {acc}")
 
 solve1()
 solve2()
