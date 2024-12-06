@@ -10,8 +10,6 @@ INPUT_FILE="in/" + sys.argv[0].split('/')[1].split('.')[0] + ".in"
 with open(INPUT_FILE) as f:
     data = f.readlines()
 
-
-
 rules = {}
 updates = []
 
