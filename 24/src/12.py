@@ -137,6 +137,7 @@ def solve2():
             if not (i,j) in visi_v2:
                 area, sides, polygon  = dfs_v2(i,j)
 
+                print(polygon)
                 sides = list(sides.keys())
 
                 h_lines = join_lines(sides, is_same_side_h)
