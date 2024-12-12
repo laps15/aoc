@@ -15,11 +15,15 @@ with open(INPUT_FILE) as f:
             tmp.append(c)
         data.append(tmp)
 
-print(data)
-
 
 def valid(i, j):
     return (i >= 0 and i < len(data)) and ((j >= 0) and (j < len(data[0])))
+
+def getter(matrix, p):
+    if valid(p[0], p[1]):
+        return matrix[p[0]][p[1]]
+    
+    return -1
 
 visi_v1 = {}
 def dfs_v1(i, j):
@@ -49,26 +53,25 @@ def solve1():
         for j in range(len(data[i])):
             if not (i,j) in visi_v1:
                 a,p = dfs_v1(i,j)
-                print(f"Region {data[i][j]}, price {a}*{p} = {a*p}")
+                # print(f"Region {data[i][j]}, price {a}*{p} = {a*p}")
                 acc += a*p
 
     print(f"First result: {acc}")
 
 
-visi_v2 = {}
-def dfs_v2(i, j):
-    if (i,j) in visi_v2:
+def dfs(i, j):
+    if (i,j) in visi:
         return 0,{},{}
     
-    visi_v2[(i,j)] = True
+    visi[(i,j)] = True
 
     polygon = {}
     area = 1
     sides = {}
 
     for move in [(-1,0), (0,-1), (1,0), (0,1)]:
-        if valid(i+move[0], j+move[1]) and data[i][j] == data[i+move[0]][j+move[1]]:
-            na, ns, npoly = dfs_v2(i+move[0], j+move[1])
+        if valid(i+move[0], j+move[1]) and data[i][j] == getter(data, (i+move[0], j+move[1])):
+            na, ns, npoly = dfs(i+move[0], j+move[1])
             area += na
             sides.update(ns)
             polygon.update(npoly)
@@ -78,117 +81,122 @@ def dfs_v2(i, j):
 
     return area, sides, polygon
 
-def is_same_side_h(a,b):
-    return a[0] == b[0] and abs(b[1]-a[1]) < 2
+'''
+Navigate the perimeter clock-wise.
+'''
+def get_next(state, perimeter):
+    (loc, fac) = state
 
-def is_same_side_v(a,b):
-    return a[1] == b[1] and abs(b[0]-a[0]) < 2
+    if fac == (-1,0):
+        if (loc[0], loc[1]+1) in perimeter:
+            if fac in perimeter[(loc[0], loc[1]+1)]:
+                return ((loc[0], loc[1]+1), fac), False
+        if (loc[0]-1, loc[1]+1) in perimeter:
+            if (0,-1) in perimeter[(loc[0]-1, loc[1]+1)]:
+                return ((loc[0]-1, loc[1]+1), (0,-1)), True
+        if loc in perimeter and (0,1) in perimeter[loc]:
+            return (loc, (0,1)), True
+        return state, False
 
-def join_lines(points, checker, key=None):
-    points.sort(key=key)
-
-    reduced_points = []
-    lines = []
-    idx = 0
-    while idx < len(points):
-        start = points[idx]
-        line = [start]
-        while idx < len(points) - 1 and checker(points[idx], points[idx+1]):
-            idx += 1
-            line.append(points[idx])
-        idx += 1
-        lines.append(line)
-        # reduced_points.append(start)
-
-    return lines
-
-def merge_lines(lines):
-    result = []
-    i = 0
-    print(lines)
-    while i < len(lines):
-        j = i+1
-        new_line = {p: 1 for p in lines[i]}
-        while j < len(lines):
-            merge_candidate = {p: 1 for p in lines[j]}
-            increment = 1
-            for p in merge_candidate:
-                if p in new_line:
-                    new_line.update(merge_candidate)
-                    lines.pop(j)
-                    increment = 0
-                    break
-
-            j+= increment
+    if fac == (0,1):
+        if (loc[0]+1, loc[1]) in perimeter:
+            if fac in perimeter[(loc[0]+1, loc[1])]:
+                return ((loc[0]+1, loc[1]), fac), False
+        if (loc[0]+1, loc[1]+1) in perimeter:
+            if (-1,0) in perimeter[(loc[0]+1, loc[1]+1)]:
+                return ((loc[0]+1, loc[1]+1), (-1, 0)), True
+        if loc in perimeter and (1,0) in perimeter[loc]:
+            return (loc, (1,0)), True
+        return state, False
         
-        i+= 1
+        
+    if fac == (1,0):
+        if (loc[0], loc[1]-1) in perimeter:
+            if fac in perimeter[(loc[0], loc[1]-1)]:
+                return ((loc[0], loc[1]-1), fac), False
+        if (loc[0]+1, loc[1]-1) in perimeter:
+            if (0,1) in perimeter[(loc[0]+1, loc[1]-1)]:
+                return ((loc[0]+1, loc[1]-1), (0, 1)), True
+        if loc in perimeter and (0,-1) in perimeter[loc]:
+            return (loc, (0,-1)), True
+        return state, False
+        
+    if (loc[0]-1, loc[1]) in perimeter:
+        if fac in perimeter[(loc[0]-1, loc[1])]:
+            return ((loc[0]-1, loc[1]), fac), False
+    if (loc[0]-1, loc[1]-1) in perimeter:
+        if (1,0) in perimeter[(loc[0]-1, loc[1]-1)]:
+            return ((loc[0]-1, loc[1]-1), (1, 0)), True
+    if loc in perimeter and (-1, 0) in perimeter[loc]:
+        return (loc, (-1, 0)), True
+    return state, False
 
-        result.append(list(new_line.keys()))
 
-    return result 
+'''
+Get left-most point that has a top border
+'''
+def get_initial_state(perimeter):
+    coords = list(perimeter.keys())
+    coords.sort()
+
+    for coord in coords:
+        if (-1,0) in perimeter[coord]:
+            return (coord, (-1,0))
+        
+    return (coords[0], list(perimeter[coords[0]].keys())[0])
 
 
-
-def solve2():
+def solve2(polygons):
     acc = 0
 
-    for i in range(len(data)):
-        for j in range(len(data[i])):
-            if not (i,j) in visi_v2:
-                area, sides, polygon  = dfs_v2(i,j)
+    for polygon in polygons:
+        area, sides, polygon  = polygon
 
-                print(polygon)
-                sides = list(sides.keys())
+        sides = list(polygon.keys())
 
-                h_lines = join_lines(sides, is_same_side_h)
-                # print(h_lines)
-                v_lines = join_lines(sides, is_same_side_v, key=lambda p: (p[1],p[0]))
-                # print(v_lines)
+        perimeter = {}
+        for p in sides:
+            for move in [(-1,0), (0,-1), (1,0), (0,1)]:
+                if getter(data, (p[0]+move[0],p[1]+move[1])) != data[p[0]][p[1]]:
+                    if not p in perimeter:
+                        perimeter[p] = {}
+                    perimeter[p][move] = True
 
-                lines = []
-                for line in h_lines:
-                    if len(line) > 1:
-                        lines.append(line)
-                        continue
-                    
-                    midline = False
-                    for check in v_lines:
-                        midline = midline or (len(check) > 1 and line[0] in check)
+        n_sides = 0
+        n_sides_1 = 0
 
-                    if not midline:
-                        lines.append(line)
-                        
-                for line in v_lines:
-                    if len(line) > 1:
-                        lines.append(line)
-                        continue
-                    
-                    midline = False
-                    for check in h_lines:
-                        midline = midline or (len(check) > 1 and line[0] in check)
+        while len(perimeter) > 0:
+            last_move = get_initial_state(perimeter)
 
-                    if not midline and line not in lines:
-                        lines.append(line)
+            n_sides += 1
+            perimeter[last_move[0]].pop(last_move[1])
+            if len(perimeter[last_move[0]]) == 0:
+                perimeter.pop(last_move[0])
+            current_state, new_side = get_next(last_move, perimeter)
 
-                lines = merge_lines(lines)
+            while current_state != last_move:
+                if new_side:
+                    n_sides += 1
 
-                print(lines)
-                n_sides = 0
+                last_move = current_state
+                perimeter[current_state[0]].pop(current_state[1])
+                if len(perimeter[current_state[0]]) == 0:
+                    perimeter.pop(current_state[0])
 
-                for line in lines:
-                    for move in [(-1,0), (0,-1), (1,0), (0,1)]:
-                        add = 0
-                        for p in line:
-                            if (p[0]+move[0], p[1]+move[1]) in polygon:
-                                add = 1
-                        if add == 1:
-                            print(f"Side found on line {line}{move}")
-                        n_sides += add
+                current_state, new_side = get_next(current_state, perimeter)
 
-                print(f"Region {data[i][j]}, price {area}*{n_sides} = {area*n_sides}")
-                acc += area*n_sides
+
+        acc += area*n_sides
 
     print(f"Second result: {acc}")
 
+visi = {}
+
+polygons = []
+for i in range(len(data)):
+    for j in range(len(data[i])):
+        if not (i,j) in visi:
+            area, sides, polygon  = dfs(i,j)
+            polygons.append((area, sides, polygon))
 solve1()
-solve2()
+solve2(polygons)
