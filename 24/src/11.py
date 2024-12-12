@@ -10,7 +10,6 @@ with open(INPUT_FILE) as f:
     data = f.readlines()
 
 stones = [int(i) for i in data[0].strip().split()]
-print(stones)
 
 def upsert(d, i, v):
     if i in d:
@@ -58,12 +57,20 @@ def solve2():
     for i in stones:
         upsert(stones_copy, i, 1)
 
-    for i in range(75):
+    for i in range(25):
+        stones_copy = update_stones_dict(stones_copy)
+        
+    for stone in stones_copy:
+        acc += stones_copy[stone]
+    print(f"First result: {acc}")
+
+    for i in range(50):
         stones_copy = update_stones_dict(stones_copy)
 
+    acc = 0
     for stone in stones_copy:
         acc += stones_copy[stone]
     print(f"Second result: {acc}")
 
-solve1()
+# solve1()
 solve2()
